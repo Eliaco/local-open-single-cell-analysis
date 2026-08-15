@@ -64,7 +64,7 @@ if coordinates is None:
 coordinates = np.nan_to_num(coordinates, nan=0.0, posinf=0.0, neginf=0.0)
 projection = "UMAP" if used_umap else "PCA"
 clusters = KMeans(n_clusters=min(5, matrix.shape[0]), random_state=0, n_init=10).fit_predict(matrix) + 1
-points = [{"x": float(x), "y": float(y), "label": str(name), "cluster": str(cluster)} for name, (x, y), cluster in zip(labels, coordinates, clusters)]
+points = [{"x": float(coordinate[0]), "y": float(coordinate[1]), "label": str(name), "cluster": str(cluster)} for name, coordinate, cluster in zip(labels, coordinates, clusters)]
 json.dumps({"points": points, "cells": int(matrix.shape[0]), "genes": int(matrix.shape[1]), "projection": projection})
 `
     progress('Normalize counts', isH5ad ? 'Reading AnnData and preparing expression values…' : 'Filtering and normalizing count values…', 48)

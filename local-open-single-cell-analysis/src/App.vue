@@ -34,6 +34,10 @@ const plotPoints = computed(() => {
   }))
 })
 
+function formatSize(bytes: number) {
+  return bytes >= 1024 * 1024 ? `${(bytes / 1024 / 1024).toFixed(1)} MB` : `${(bytes / 1024).toFixed(1)} KB`
+}
+
 function selectFile(event: Event) {
   const input = event.target as HTMLInputElement
   file.value = input.files?.[0] ?? null
@@ -105,7 +109,7 @@ onBeforeUnmount(() => worker?.terminate())
         <label class="dropzone" :class="{ selected: file }">
           <input type="file" accept=".csv,.tsv,.txt,.h5ad" @change="selectFile" />
           <strong>{{ file ? file.name : 'Drop a matrix here' }}</strong>
-          <small>{{ file ? `${(file.size / 1024).toFixed(1)} KB · ready` : 'or click to browse · CSV / TSV / H5AD' }}</small>
+          <small>{{ file ? `${formatSize(file.size)} · ready` : 'or click to browse · CSV / TSV / H5AD' }}</small>
         </label>
         <button class="run" :disabled="!file || running" @click="analyze">
           {{ running ? 'RUNNING PYTHON…' : 'RUN ANALYSIS' }} <span>↗</span>

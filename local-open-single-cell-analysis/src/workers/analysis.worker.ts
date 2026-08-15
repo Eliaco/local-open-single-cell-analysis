@@ -45,12 +45,14 @@ if is_h5ad:
     adata = ad.read_h5ad("/tmp/input.h5ad")
     matrix = adata.X.toarray() if hasattr(adata.X, "toarray") else np.asarray(adata.X)
     labels = adata.obs_names.astype(str)
-    coordinates = adata.obsm["X_umap"][:, :2] if "X_umap" in adata.obsm else None
+    used_umap = "X_umap" in adata.obsm
+    coordinates = adata.obsm["X_umap"][:, :2] if used_umap else None
 else:
     raw = pd.read_csv(io.StringIO(bytes(file_bytes).decode("utf-8")), sep=None, engine="python", index_col=0)
     raw = raw.apply(pd.to_numeric, errors="coerce").fillna(0)
     raw = raw.loc[raw.sum(axis=1) > 0, raw.sum(axis=0) > 0]
     matrix, labels = raw.T.to_numpy(), raw.columns.astype(str)
+    used_umap = False
     coordinates = None
 
 if matrix.shape[0] < 3 or matrix.shape[1] < 3:
@@ -58,7 +60,7 @@ if matrix.shape[0] < 3 or matrix.shape[1] < 3:
 matrix = np.log1p(matrix / np.maximum(matrix.sum(axis=1, keepdims=True), 1) * 1e4)
 if coordinates is None:
     coordinates = PCA(n_components=2, random_state=0).fit_transform(matrix)
-projection = "UMAP" if is_h5ad and "X_umap" in adata.obsm else "PCA"
+projection = "UMAP" if used_umap else "PCA"
 clusters = KMeans(n_clusters=min(5, matrix.shape[0]), random_state=0, n_init=10).fit_predict(matrix) + 1
 points = [{"x": float(x), "y": float(y), "label": str(name), "cluster": str(cluster)} for name, (x, y), cluster in zip(labels, coordinates, clusters)]
 json.dumps({"points": points, "cells": int(matrix.shape[0]), "genes": int(matrix.shape[1]), "projection": projection})

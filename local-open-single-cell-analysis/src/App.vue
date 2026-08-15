@@ -120,7 +120,7 @@ onBeforeUnmount(() => worker?.terminate())
       <section class="panel results">
         <div class="panel-heading"><span>03</span><h2>{{ result?.projection ?? 'UMAP' }} projection</h2><small v-if="result">{{ result.cells }} cells · {{ result.genes }} genes</small></div>
         <div v-if="result" class="chart-wrap">
-          <svg viewBox="0 0 400 400" role="img" aria-label="UMAP scatter plot">
+          <svg viewBox="0 0 400 400" role="img" :aria-label="`${result.projection} scatter plot`">
             <line x1="28" y1="372" x2="372" y2="372" /><line x1="28" y1="372" x2="28" y2="28" />
             <circle v-for="point in plotPoints" :key="point.label" :cx="point.cx" :cy="point.cy" r="4.5" :class="`cluster-${point.cluster}`"><title>{{ point.label }}</title></circle>
           </svg>

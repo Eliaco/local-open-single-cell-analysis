@@ -28,7 +28,6 @@ self.onmessage = async ({ data }: MessageEvent<Message>) => {
     progress('Read matrix', 'Parsing genes and cell counts…', 30)
     const script = `
 import io, json
-import h5py
 import numpy as np
 import pandas as pd
 from scipy import sparse
@@ -36,6 +35,7 @@ from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 
 if is_h5ad:
+    import h5py
     with open("/tmp/input.h5ad", "wb") as handle:
         handle.write(file_bytes.tobytes())
     def read_h5ad_value(value):
@@ -57,7 +57,7 @@ if is_h5ad:
         matrix = matrix.toarray() if sparse.issparse(matrix) else np.asarray(matrix)
         obs_index = handle["obs"]["_index"][()]
         labels = np.asarray([item.decode() if isinstance(item, bytes) else str(item) for item in obs_index])
-        stored_coordinates = read_h5ad_value(handle["obsm"]["X_umap"]) if "X_umap" in handle["obsm"] else None
+        stored_coordinates = read_h5ad_value(handle["obsm"]["X_umap"]) if "obsm" in handle and "X_umap" in handle["obsm"] else None
     if stored_coordinates is not None:
         coordinates = stored_coordinates.toarray() if sparse.issparse(stored_coordinates) else np.asarray(stored_coordinates)
         used_umap = coordinates.ndim == 2 and coordinates.shape[0] == matrix.shape[0] and coordinates.shape[1] >= 2

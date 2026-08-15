@@ -18,6 +18,8 @@ self.onmessage = async ({ data }: MessageEvent<Message>) => {
     const pyodide = await getPyodide()
     await pyodide.loadPackage(['numpy', 'scipy', 'pandas', 'scikit-learn'])
     progress('Python runtime', 'Python is ready in a dedicated worker.', 20)
+    progress('Install Scanpy', 'Preparing the Scanpy analysis package…', 24)
+    await pyodide.runPythonAsync('import micropip; await micropip.install("scanpy")')
     const content = await data.content.text()
     pyodide.globals.set('matrix_text', content)
     progress('Read matrix', 'Parsing genes and cell counts…', 30)

@@ -47,9 +47,8 @@ points = [{"x": float(x), "y": float(y), "label": str(name), "cluster": str(i % 
 json.dumps({"points": points, "cells": int(adata.n_obs), "genes": int(adata.n_vars)})
 `
     progress('Normalize counts', 'Filtering, normalizing, and selecting variable genes…', 48)
-    await pyodide.runPythonAsync(script)
+    const json = await pyodide.runPythonAsync(script) as string
     progress('Compute neighbors', 'Building the PCA neighborhood graph…', 68)
-    const json = pyodide.runPython('str(_)') as string
     progress('Compute UMAP', 'Embedding cells in two dimensions…', 88)
     self.postMessage({ type: 'result', ...JSON.parse(json) })
   } catch (error) {

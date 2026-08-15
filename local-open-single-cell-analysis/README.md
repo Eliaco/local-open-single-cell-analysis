@@ -1,6 +1,8 @@
 # local-open-single-cell-analysis
 
-This template should help get you started developing with Vue 3 in Vite.
+An entirely local scRNA-seq exploration example. Load a CSV/TSV count matrix and a Web Worker runs a Scanpy preprocessing, PCA, neighbors, and UMAP pipeline through Pyodide. The resulting projection is rendered in the browser; no matrix data is uploaded.
+
+The expected matrix shape is genes in rows and cells in columns. The first column contains gene identifiers and the first row contains cell identifiers.
 
 ## Recommended IDE Setup
 
@@ -40,3 +42,5 @@ npm run dev
 ```sh
 npm run build
 ```
+
+The first analysis downloads the Pyodide runtime and its Python packages from the jsDelivr CDN. After that, processing happens in the worker and the input remains on the device.

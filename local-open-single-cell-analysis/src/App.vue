@@ -78,6 +78,8 @@ function analyze() {
   worker.onerror = () => {
     error.value = 'The worker stopped unexpectedly. Check the file format and try again.'
     running.value = false
+    worker?.terminate()
+    worker = null
   }
   file.value.arrayBuffer().then((buffer) => {
     if (!worker) {

@@ -43,6 +43,8 @@ if is_h5ad:
             return value[()]
         encoding = value.attrs.get("encoding-type", b"")
         encoding = encoding.decode() if isinstance(encoding, bytes) else str(encoding)
+        if encoding == "array":
+            return value["data"][()]
         if encoding in ("csr_matrix", "csc_matrix"):
             shape = tuple(int(item) for item in value.attrs["shape"])
             matrix_data = value["data"][()]
@@ -83,7 +85,8 @@ coordinates = np.nan_to_num(coordinates, nan=0.0, posinf=0.0, neginf=0.0)
 projection = "UMAP" if used_umap else "PCA"
 clusters = KMeans(n_clusters=min(5, matrix.shape[0]), random_state=0, n_init=10).fit_predict(matrix) + 1
 points = [{"x": float(coordinate[0]), "y": float(coordinate[1]), "label": str(name), "cluster": str(cluster)} for name, coordinate, cluster in zip(labels, coordinates, clusters)]
-json.dumps({"points": points, "cells": int(matrix.shape[0]), "genes": int(matrix.shape[1]), "projection": projection})
+result = json.dumps({"points": points, "cells": int(matrix.shape[0]), "genes": int(matrix.shape[1]), "projection": projection})
+result
 `
     progress('Normalize counts', isH5ad ? 'Reading AnnData and preparing expression values…' : 'Filtering and normalizing count values…', 48)
     progress('Compute projection', isH5ad ? 'Using stored UMAP coordinates when available; otherwise computing PCA…' : 'Computing a local PCA projection and cell clusters…', 68)

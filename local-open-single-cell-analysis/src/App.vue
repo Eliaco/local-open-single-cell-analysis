@@ -68,11 +68,13 @@ function analyze() {
       status.value = 'Analysis complete. Results stayed in this browser.'
       running.value = false
       worker?.terminate()
+      worker = null
     } else {
       error.value = data.message
       status.value = 'The analysis could not be completed.'
       running.value = false
       worker?.terminate()
+      worker = null
     }
   }
   worker.onerror = () => {

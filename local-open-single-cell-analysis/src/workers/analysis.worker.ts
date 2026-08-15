@@ -45,8 +45,14 @@ if is_h5ad:
     adata = ad.read_h5ad("/tmp/input.h5ad")
     matrix = adata.X.toarray() if hasattr(adata.X, "toarray") else np.asarray(adata.X)
     labels = adata.obs_names.astype(str)
-    used_umap = "X_umap" in adata.obsm
-    coordinates = adata.obsm["X_umap"][:, :2] if used_umap else None
+    stored_coordinates = adata.obsm.get("X_umap")
+    if stored_coordinates is not None:
+        coordinates = stored_coordinates.toarray() if hasattr(stored_coordinates, "toarray") else np.asarray(stored_coordinates)
+        used_umap = coordinates.ndim == 2 and coordinates.shape[0] == matrix.shape[0] and coordinates.shape[1] >= 2
+        coordinates = coordinates[:, :2] if used_umap else None
+    else:
+        used_umap = False
+        coordinates = None
 else:
     raw = pd.read_csv(io.StringIO(bytes(file_bytes).decode("utf-8")), sep=None, engine="python", index_col=0)
     raw = raw.apply(pd.to_numeric, errors="coerce").fillna(0)
@@ -55,7 +61,7 @@ else:
     used_umap = False
     coordinates = None
 
-if matrix.shape[0] < 3 or matrix.shape[1] < 3:
+if matrix.ndim != 2 or matrix.shape[0] < 3 or matrix.shape[1] < 3:
     raise ValueError("The file needs at least 3 cells and 3 genes.")
 matrix = np.nan_to_num(matrix, nan=0.0, posinf=0.0, neginf=0.0)
 matrix = np.log1p(matrix / np.maximum(matrix.sum(axis=1, keepdims=True), 1) * 1e4)

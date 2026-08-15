@@ -13,7 +13,7 @@ const file = ref<File | null>(null)
 const running = ref(false)
 const error = ref('')
 const progress = ref(0)
-const status = ref('Choose a CSV or TSV count matrix to begin.')
+const status = ref('Choose a CSV, TSV, or H5AD file to begin.')
 const steps = ref<{ step: string; detail: string }[]>([])
 const result = ref<ResultEvent | null>(null)
 let worker: Worker | null = null
@@ -74,7 +74,10 @@ function analyze() {
     error.value = 'The worker stopped unexpectedly. Check the file format and try again.'
     running.value = false
   }
-  worker.postMessage({ content: file.value })
+  file.value.arrayBuffer().then((buffer) => worker?.postMessage(
+    { name: file.value?.name ?? '', bytes: buffer },
+    [buffer],
+  ))
 }
 
 onBeforeUnmount(() => worker?.terminate())
@@ -92,9 +95,9 @@ onBeforeUnmount(() => worker?.terminate())
       <aside class="panel controls">
         <div class="panel-heading"><span>01</span><h2>Load matrix</h2></div>
         <label class="dropzone" :class="{ selected: file }">
-          <input type="file" accept=".csv,.tsv,.txt" @change="selectFile" />
+          <input type="file" accept=".csv,.tsv,.txt,.h5ad" @change="selectFile" />
           <strong>{{ file ? file.name : 'Drop a matrix here' }}</strong>
-          <small>{{ file ? `${(file.size / 1024).toFixed(1)} KB · ready` : 'or click to browse · CSV / TSV' }}</small>
+          <small>{{ file ? `${(file.size / 1024).toFixed(1)} KB · ready` : 'or click to browse · CSV / TSV / H5AD' }}</small>
         </label>
         <button class="run" :disabled="!file || running" @click="analyze">
           {{ running ? 'RUNNING PYTHON…' : 'RUN ANALYSIS' }} <span>↗</span>

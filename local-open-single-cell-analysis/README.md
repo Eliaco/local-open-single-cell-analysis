@@ -1,8 +1,8 @@
 # local-open-single-cell-analysis
 
-An entirely local scRNA-seq exploration example. Load a CSV/TSV count matrix and a Web Worker runs a Scanpy preprocessing, PCA, neighbors, and UMAP pipeline through Pyodide. The resulting projection is rendered in the browser; no matrix data is uploaded.
+An entirely local scRNA-seq exploration example. Load a CSV/TSV count matrix or an `.h5ad` AnnData file and a Web Worker prepares the data through Pyodide. Existing `X_umap` coordinates in an H5AD file are displayed directly; otherwise a local PCA projection is generated. The resulting projection is rendered in the browser; no matrix data is uploaded.
 
-The expected matrix shape is genes in rows and cells in columns. The first column contains gene identifiers and the first row contains cell identifiers.
+The expected text matrix shape is genes in rows and cells in columns. The first column contains gene identifiers and the first row contains cell identifiers. H5AD files should contain observations in rows, as usual for AnnData.
 
 ## Recommended IDE Setup
 
@@ -43,4 +43,4 @@ npm run dev
 npm run build
 ```
 
-The first analysis downloads the Pyodide runtime and its Python packages from the jsDelivr CDN. After that, processing happens in the worker and the input remains on the device.
+The first analysis downloads the Pyodide runtime and its Python packages from the jsDelivr CDN. Scanpy is intentionally not installed in the browser because its compiled dependency stack is not reliably compatible with Pyodide; this avoids the previous `Install Scanpy` failure. Processing happens in the worker and the input remains on the device.

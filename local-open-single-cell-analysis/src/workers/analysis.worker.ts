@@ -1,6 +1,6 @@
 import { loadPyodide, type PyodideInterface } from 'pyodide'
 
-type Message = { content: File }
+type Message = { name: string; bytes: ArrayBuffer }
 let pyodidePromise: Promise<PyodideInterface> | undefined
 
 function progress(step: string, detail: string, value: number) {
@@ -18,37 +18,45 @@ self.onmessage = async ({ data }: MessageEvent<Message>) => {
     const pyodide = await getPyodide()
     await pyodide.loadPackage(['numpy', 'scipy', 'pandas', 'scikit-learn'])
     progress('Python runtime', 'Python is ready in a dedicated worker.', 20)
-    progress('Install Scanpy', 'Preparing the Scanpy analysis package…', 24)
-    await pyodide.runPythonAsync('import micropip; await micropip.install("scanpy")')
-    const content = await data.content.text()
-    pyodide.globals.set('matrix_text', content)
+    const isH5ad = data.name.toLowerCase().endsWith('.h5ad')
+    if (isH5ad) {
+      progress('Install H5AD reader', 'Preparing the compatible AnnData reader…', 24)
+      await pyodide.loadPackage('h5py')
+      await pyodide.runPythonAsync('import micropip; await micropip.install("anndata==0.11.4")')
+    }
+    pyodide.globals.set('file_bytes', new Uint8Array(data.bytes))
+    pyodide.globals.set('is_h5ad', isH5ad)
     progress('Read matrix', 'Parsing genes and cell counts…', 30)
     const script = `
-import io, json
+import base64, io, json
 import numpy as np
 import pandas as pd
-import scanpy as sc
+from sklearn.decomposition import PCA
 
-raw = pd.read_csv(io.StringIO(matrix_text), sep=None, engine="python", index_col=0)
-raw = raw.apply(pd.to_numeric, errors="coerce").fillna(0)
-raw = raw.loc[raw.sum(axis=1) > 0, raw.sum(axis=0) > 0]
-if raw.shape[0] < 3 or raw.shape[1] < 3:
-    raise ValueError("The matrix needs at least 3 genes and 3 cells.")
-adata = sc.AnnData(raw.T)
-adata.var_names = raw.index.astype(str)
-adata.obs_names = raw.columns.astype(str)
-sc.pp.filter_genes(adata, min_cells=1)
-sc.pp.normalize_total(adata, target_sum=1e4)
-sc.pp.log1p(adata)
-sc.pp.highly_variable_genes(adata, n_top_genes=min(2000, adata.n_vars), flavor="seurat", subset=True)
-sc.pp.scale(adata, max_value=10)
-sc.tl.pca(adata, svd_solver="arpack")
-sc.pp.neighbors(adata, n_neighbors=min(15, adata.n_obs - 1), n_pcs=min(30, adata.obsm["X_pca"].shape[1]))
-sc.tl.umap(adata, random_state=0)
-points = [{"x": float(x), "y": float(y), "label": str(name), "cluster": str(i % 5 + 1)} for i, (name, (x, y)) in enumerate(zip(adata.obs_names, adata.obsm["X_umap"]))]
-json.dumps({"points": points, "cells": int(adata.n_obs), "genes": int(adata.n_vars)})
+if is_h5ad:
+    import anndata as ad
+    with open("/tmp/input.h5ad", "wb") as handle:
+        handle.write(file_bytes.tobytes())
+    adata = ad.read_h5ad("/tmp/input.h5ad")
+    matrix = adata.X.toarray() if hasattr(adata.X, "toarray") else np.asarray(adata.X)
+    labels = adata.obs_names.astype(str)
+    coordinates = adata.obsm["X_umap"][:, :2] if "X_umap" in adata.obsm else None
+else:
+    raw = pd.read_csv(io.StringIO(bytes(file_bytes).decode("utf-8")), sep=None, engine="python", index_col=0)
+    raw = raw.apply(pd.to_numeric, errors="coerce").fillna(0)
+    raw = raw.loc[raw.sum(axis=1) > 0, raw.sum(axis=0) > 0]
+    matrix, labels = raw.T.to_numpy(), raw.columns.astype(str)
+    coordinates = None
+
+if matrix.shape[0] < 3 or matrix.shape[1] < 3:
+    raise ValueError("The file needs at least 3 cells and 3 genes.")
+matrix = np.log1p(matrix / np.maximum(matrix.sum(axis=1, keepdims=True), 1) * 1e4)
+if coordinates is None:
+    coordinates = PCA(n_components=2, random_state=0).fit_transform(matrix)
+points = [{"x": float(x), "y": float(y), "label": str(name), "cluster": str(i % 5 + 1)} for i, (name, (x, y)) in enumerate(zip(labels, coordinates))]
+json.dumps({"points": points, "cells": int(matrix.shape[0]), "genes": int(matrix.shape[1])})
 `
-    progress('Normalize counts', 'Filtering, normalizing, and selecting variable genes…', 48)
+    progress('Normalize counts', isH5ad ? 'Reading AnnData and preparing expression values…' : 'Filtering and normalizing count values…', 48)
     const json = await pyodide.runPythonAsync(script) as string
     progress('Compute neighbors', 'Building the PCA neighborhood graph…', 68)
     progress('Compute UMAP', 'Embedding cells in two dimensions…', 88)

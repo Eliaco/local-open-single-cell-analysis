@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref } from 'vue'
 
-type ProgressEvent = { type: 'progress'; step: string; detail: string; progress: number }
+type AnalysisProgressEvent = { type: 'progress'; step: string; detail: string; progress: number }
 type ResultEvent = {
   type: 'result'
   points: Array<{ x: number; y: number; label: string; cluster: string }>
@@ -53,7 +53,7 @@ function analyze() {
   progress.value = 0
   status.value = 'Starting the Python runtime…'
   worker = new Worker(new URL('./workers/analysis.worker.ts', import.meta.url), { type: 'module' })
-  worker.onmessage = ({ data }: MessageEvent<ProgressEvent | ResultEvent | { type: 'error'; message: string }>) => {
+  worker.onmessage = ({ data }: MessageEvent<AnalysisProgressEvent | ResultEvent | { type: 'error'; message: string }>) => {
     if (data.type === 'progress') {
       progress.value = data.progress
       status.value = data.detail
@@ -111,7 +111,7 @@ onBeforeUnmount(() => worker?.terminate())
         <div class="progress-track"><i :style="{ width: `${progress}%` }"></i></div>
         <p class="status">{{ status }}</p>
         <ol class="steps">
-          <li v-for="item in steps" :key="item.step" class="done"><b>✓</b><span><strong>{{ item.step }}</strong>{{ item.detail }}</span></li>
+          <li v-for="(item, index) in steps" :key="`${item.step}-${index}`" class="done"><b>✓</b><span><strong>{{ item.step }}</strong>{{ item.detail }}</span></li>
           <li v-if="!steps.length" class="empty">Waiting for a matrix.</li>
         </ol>
         <p v-if="error" class="error">{{ error }}</p>

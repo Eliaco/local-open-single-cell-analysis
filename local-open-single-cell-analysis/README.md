@@ -1,6 +1,6 @@
 # local-open-single-cell-analysis
 
-An entirely local scRNA-seq exploration example. Load a CSV/TSV count matrix or an `.h5ad` AnnData file and a Web Worker prepares the data through Pyodide. Existing `X_umap` coordinates in an H5AD file are displayed directly; otherwise a local PCA projection is generated. The resulting projection is rendered in the browser; no matrix data is uploaded.
+An entirely local scRNA-seq exploration example. Load a CSV/TSV count matrix or an `.h5ad` AnnData file and a Web Worker prepares the data through Pyodide. Existing `X_umap` coordinates in an H5AD file are displayed directly; otherwise a local PCA projection is generated. Colors represent deterministic KMeans groups from the expression matrix, including when an H5AD already contains a separate clustering annotation. The resulting projection is rendered in the browser; no matrix data is uploaded.
 
 The expected text matrix shape is genes in rows and cells in columns. The first column contains gene identifiers and the first row contains cell identifiers. H5AD files should contain observations in rows, as usual for AnnData.
 

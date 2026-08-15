@@ -7,6 +7,7 @@ type ResultEvent = {
   points: Array<{ x: number; y: number; label: string; cluster: string }>
   cells: number
   genes: number
+  projection: 'UMAP' | 'PCA'
 }
 
 const file = ref<File | null>(null)
@@ -117,13 +118,13 @@ onBeforeUnmount(() => worker?.terminate())
       </section>
 
       <section class="panel results">
-        <div class="panel-heading"><span>03</span><h2>UMAP projection</h2><small v-if="result">{{ result.cells }} cells · {{ result.genes }} genes</small></div>
+        <div class="panel-heading"><span>03</span><h2>{{ result?.projection ?? 'UMAP' }} projection</h2><small v-if="result">{{ result.cells }} cells · {{ result.genes }} genes</small></div>
         <div v-if="result" class="chart-wrap">
           <svg viewBox="0 0 400 400" role="img" aria-label="UMAP scatter plot">
             <line x1="28" y1="372" x2="372" y2="372" /><line x1="28" y1="372" x2="28" y2="28" />
             <circle v-for="point in plotPoints" :key="point.label" :cx="point.cx" :cy="point.cy" r="4.5" :class="`cluster-${point.cluster}`"><title>{{ point.label }}</title></circle>
           </svg>
-          <p class="axis-label">UMAP 1 <span>UMAP 2 ↗</span></p>
+          <p class="axis-label">{{ result.projection }} 1 <span>{{ result.projection }} 2 ↗</span></p>
         </div>
         <div v-else class="placeholder"><span>∿</span><p>Your projection<br />will appear here</p></div>
       </section>

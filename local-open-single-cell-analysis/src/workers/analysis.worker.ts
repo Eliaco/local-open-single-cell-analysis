@@ -22,6 +22,7 @@ self.onmessage = async ({ data }: MessageEvent<Message>) => {
     if (isH5ad) {
       progress('Install H5AD reader', 'Preparing the compatible AnnData reader…', 24)
       await pyodide.loadPackage('h5py')
+      await pyodide.loadPackage('micropip')
       await pyodide.runPythonAsync('import micropip')
       const micropip = pyodide.pyimport('micropip')
       await micropip.install('anndata==0.11.4')
@@ -57,9 +58,10 @@ if matrix.shape[0] < 3 or matrix.shape[1] < 3:
 matrix = np.log1p(matrix / np.maximum(matrix.sum(axis=1, keepdims=True), 1) * 1e4)
 if coordinates is None:
     coordinates = PCA(n_components=2, random_state=0).fit_transform(matrix)
+projection = "UMAP" if is_h5ad and "X_umap" in adata.obsm else "PCA"
 clusters = KMeans(n_clusters=min(5, matrix.shape[0]), random_state=0, n_init=10).fit_predict(matrix) + 1
 points = [{"x": float(x), "y": float(y), "label": str(name), "cluster": str(cluster)} for name, (x, y), cluster in zip(labels, coordinates, clusters)]
-json.dumps({"points": points, "cells": int(matrix.shape[0]), "genes": int(matrix.shape[1])})
+json.dumps({"points": points, "cells": int(matrix.shape[0]), "genes": int(matrix.shape[1]), "projection": projection})
 `
     progress('Normalize counts', isH5ad ? 'Reading AnnData and preparing expression values…' : 'Filtering and normalizing count values…', 48)
     progress('Compute projection', isH5ad ? 'Using stored UMAP coordinates when available; otherwise computing PCA…' : 'Computing a local PCA projection and cell clusters…', 68)

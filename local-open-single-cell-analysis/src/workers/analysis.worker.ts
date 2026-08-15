@@ -22,7 +22,10 @@ self.onmessage = async ({ data }: MessageEvent<Message>) => {
     if (isH5ad) {
       progress('Install H5AD reader', 'Preparing the compatible AnnData reader…', 24)
       await pyodide.loadPackage('h5py')
-      await pyodide.runPythonAsync('import micropip; await micropip.install("anndata==0.11.4")')
+      await pyodide.runPythonAsync('import micropip')
+      const micropip = pyodide.pyimport('micropip')
+      await micropip.install('anndata==0.11.4')
+      micropip.destroy()
     }
     pyodide.globals.set('file_bytes', new Uint8Array(data.bytes))
     pyodide.globals.set('is_h5ad', isH5ad)
@@ -31,6 +34,7 @@ self.onmessage = async ({ data }: MessageEvent<Message>) => {
 import base64, io, json
 import numpy as np
 import pandas as pd
+from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 
 if is_h5ad:
@@ -53,13 +57,14 @@ if matrix.shape[0] < 3 or matrix.shape[1] < 3:
 matrix = np.log1p(matrix / np.maximum(matrix.sum(axis=1, keepdims=True), 1) * 1e4)
 if coordinates is None:
     coordinates = PCA(n_components=2, random_state=0).fit_transform(matrix)
-points = [{"x": float(x), "y": float(y), "label": str(name), "cluster": str(i % 5 + 1)} for i, (name, (x, y)) in enumerate(zip(labels, coordinates))]
+clusters = KMeans(n_clusters=min(5, matrix.shape[0]), random_state=0, n_init=10).fit_predict(matrix) + 1
+points = [{"x": float(x), "y": float(y), "label": str(name), "cluster": str(cluster)} for name, (x, y), cluster in zip(labels, coordinates, clusters)]
 json.dumps({"points": points, "cells": int(matrix.shape[0]), "genes": int(matrix.shape[1])})
 `
     progress('Normalize counts', isH5ad ? 'Reading AnnData and preparing expression values…' : 'Filtering and normalizing count values…', 48)
+    progress('Compute projection', isH5ad ? 'Using stored UMAP coordinates when available; otherwise computing PCA…' : 'Computing a local PCA projection and cell clusters…', 68)
     const json = await pyodide.runPythonAsync(script) as string
-    progress('Compute neighbors', 'Building the PCA neighborhood graph…', 68)
-    progress('Compute UMAP', 'Embedding cells in two dimensions…', 88)
+    progress('Render results', 'Preparing the local projection for display…', 88)
     self.postMessage({ type: 'result', ...JSON.parse(json) })
   } catch (error) {
     self.postMessage({ type: 'error', message: error instanceof Error ? error.message : String(error) })

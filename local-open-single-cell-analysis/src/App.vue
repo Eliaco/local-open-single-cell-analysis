@@ -88,7 +88,7 @@ onBeforeUnmount(() => worker?.terminate())
     <header class="hero">
       <p class="eyebrow">LOCAL // SINGLE-CELL WORKBENCH</p>
       <h1>Explore your cells,<br /><em>privately.</em></h1>
-      <p class="intro">A browser-only Scanpy pipeline. Your count matrix never leaves this device, and heavy Python work runs off the main thread.</p>
+      <p class="intro">A browser-only single-cell pipeline. Your data never leaves this device, and heavy Python work runs off the main thread.</p>
     </header>
 
     <section class="workspace">

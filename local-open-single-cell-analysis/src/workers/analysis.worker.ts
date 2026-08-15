@@ -57,9 +57,11 @@ else:
 
 if matrix.shape[0] < 3 or matrix.shape[1] < 3:
     raise ValueError("The file needs at least 3 cells and 3 genes.")
+matrix = np.nan_to_num(matrix, nan=0.0, posinf=0.0, neginf=0.0)
 matrix = np.log1p(matrix / np.maximum(matrix.sum(axis=1, keepdims=True), 1) * 1e4)
 if coordinates is None:
     coordinates = PCA(n_components=2, random_state=0).fit_transform(matrix)
+coordinates = np.nan_to_num(coordinates, nan=0.0, posinf=0.0, neginf=0.0)
 projection = "UMAP" if used_umap else "PCA"
 clusters = KMeans(n_clusters=min(5, matrix.shape[0]), random_state=0, n_init=10).fit_predict(matrix) + 1
 points = [{"x": float(x), "y": float(y), "label": str(name), "cluster": str(cluster)} for name, (x, y), cluster in zip(labels, coordinates, clusters)]

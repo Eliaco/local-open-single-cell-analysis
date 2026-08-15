@@ -75,10 +75,17 @@ function analyze() {
     error.value = 'The worker stopped unexpectedly. Check the file format and try again.'
     running.value = false
   }
-  file.value.arrayBuffer().then((buffer) => worker?.postMessage(
-    { name: file.value?.name ?? '', bytes: buffer },
-    [buffer],
-  ))
+  file.value.arrayBuffer().then((buffer) => {
+    if (!worker) {
+      running.value = false
+      return
+    }
+    worker.postMessage({ name: file.value?.name ?? '', bytes: buffer }, [buffer])
+  }).catch((readError: unknown) => {
+    error.value = readError instanceof Error ? readError.message : 'The file could not be read.'
+    status.value = 'The file could not be loaded.'
+    running.value = false
+  })
 }
 
 onBeforeUnmount(() => worker?.terminate())

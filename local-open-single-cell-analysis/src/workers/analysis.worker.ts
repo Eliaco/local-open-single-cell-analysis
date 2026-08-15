@@ -45,7 +45,7 @@ sc.pp.scale(adata, max_value=10)
 sc.tl.pca(adata, svd_solver="arpack")
 sc.pp.neighbors(adata, n_neighbors=min(15, adata.n_obs - 1), n_pcs=min(30, adata.obsm["X_pca"].shape[1]))
 sc.tl.umap(adata, random_state=0)
-points = [{"x": float(x), "y": float(y), "label": str(name), "cluster": str(i % 6)} for i, (name, (x, y)) in enumerate(zip(adata.obs_names, adata.obsm["X_umap"]))]
+points = [{"x": float(x), "y": float(y), "label": str(name), "cluster": str(i % 5 + 1)} for i, (name, (x, y)) in enumerate(zip(adata.obs_names, adata.obsm["X_umap"]))]
 json.dumps({"points": points, "cells": int(adata.n_obs), "genes": int(adata.n_vars)})
 `
     progress('Normalize counts', 'Filtering, normalizing, and selecting variable genes…', 48)

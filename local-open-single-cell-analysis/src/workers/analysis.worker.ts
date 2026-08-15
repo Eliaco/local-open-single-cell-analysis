@@ -20,34 +20,46 @@ self.onmessage = async ({ data }: MessageEvent<Message>) => {
     progress('Python runtime', 'Python is ready in a dedicated worker.', 20)
     const isH5ad = data.name.toLowerCase().endsWith('.h5ad')
     if (isH5ad) {
-      progress('Install H5AD reader', 'Preparing the compatible AnnData reader…', 24)
+      progress('Install H5AD reader', 'Preparing the compatible HDF5 reader…', 24)
       await pyodide.loadPackage('h5py')
-      await pyodide.loadPackage('micropip')
-      await pyodide.runPythonAsync('import micropip')
-      const micropip = pyodide.pyimport('micropip')
-      await micropip.install('anndata==0.11.4')
-      micropip.destroy()
     }
     pyodide.globals.set('file_bytes', new Uint8Array(data.bytes))
     pyodide.globals.set('is_h5ad', isH5ad)
     progress('Read matrix', 'Parsing genes and cell counts…', 30)
     const script = `
-import base64, io, json
+import io, json
+import h5py
 import numpy as np
 import pandas as pd
+from scipy import sparse
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 
 if is_h5ad:
-    import anndata as ad
     with open("/tmp/input.h5ad", "wb") as handle:
         handle.write(file_bytes.tobytes())
-    adata = ad.read_h5ad("/tmp/input.h5ad")
-    matrix = adata.X.toarray() if hasattr(adata.X, "toarray") else np.asarray(adata.X)
-    labels = adata.obs_names.astype(str)
-    stored_coordinates = adata.obsm.get("X_umap")
+    def read_h5ad_value(value):
+        if isinstance(value, h5py.Dataset):
+            return value[()]
+        encoding = value.attrs.get("encoding-type", b"")
+        encoding = encoding.decode() if isinstance(encoding, bytes) else str(encoding)
+        if encoding in ("csr_matrix", "csc_matrix"):
+            shape = tuple(int(item) for item in value.attrs["shape"])
+            matrix_data = value["data"][()]
+            indices = value["indices"][()]
+            indptr = value["indptr"][()]
+            constructor = sparse.csr_matrix if encoding == "csr_matrix" else sparse.csc_matrix
+            return constructor((matrix_data, indices, indptr), shape=shape)
+        raise ValueError(f"Unsupported H5AD value encoding: {encoding or 'unknown'}")
+
+    with h5py.File("/tmp/input.h5ad", "r") as handle:
+        matrix = read_h5ad_value(handle["X"])
+        matrix = matrix.toarray() if sparse.issparse(matrix) else np.asarray(matrix)
+        obs_index = handle["obs"]["_index"][()]
+        labels = np.asarray([item.decode() if isinstance(item, bytes) else str(item) for item in obs_index])
+        stored_coordinates = read_h5ad_value(handle["obsm"]["X_umap"]) if "X_umap" in handle["obsm"] else None
     if stored_coordinates is not None:
-        coordinates = stored_coordinates.toarray() if hasattr(stored_coordinates, "toarray") else np.asarray(stored_coordinates)
+        coordinates = stored_coordinates.toarray() if sparse.issparse(stored_coordinates) else np.asarray(stored_coordinates)
         used_umap = coordinates.ndim == 2 and coordinates.shape[0] == matrix.shape[0] and coordinates.shape[1] >= 2
         coordinates = coordinates[:, :2] if used_umap else None
     else:

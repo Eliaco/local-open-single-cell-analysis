@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import TestWASM from "./components/TestWASM.vue";
+import ScranPipeline from "./components/ScranPipeline.vue";
 </script>
 
 <template>
   <header>local open single cell analysis</header>
   <main>
-    <!-- TODO -->
+    <ScranPipeline />
   </main>
 </template>
 

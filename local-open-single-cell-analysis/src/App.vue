@@ -1,16 +1,9 @@
-<script setup lang="ts">
-import ScranPipeline from "./components/ScranPipeline.vue";
-</script>
+<script setup lang="ts"></script>
 
 <template>
-  <header>local open single cell analysis</header>
-  <main>
-    <ScranPipeline />
-  </main>
+  <UApp>
+    <RouterView />
+  </UApp>
 </template>
 
-<style scoped>
-header {
-  line-height: 1.5;
-}
-</style>
+<style scoped></style>

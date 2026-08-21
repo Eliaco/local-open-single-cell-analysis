@@ -88,7 +88,6 @@ const processFile = async (event: Event) => {
 
 <style scoped>
 .scran-container {
-  font-family: Arial, sans-serif;
   max-width: 900px;
   margin: 0 auto;
   padding: 20px;

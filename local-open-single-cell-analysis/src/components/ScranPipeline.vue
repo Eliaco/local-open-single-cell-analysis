@@ -17,7 +17,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import Plotly from "plotly.js-dist-min";
-import PipelineWorker from "../scran.pipeline.worker.ts?worker"; // Import the worker using Vite's worker syntax
+import PipelineWorker from "../workers/scran.pipeline.worker.ts?worker"; // Import the worker using Vite's worker syntax
 
 const statusText = ref<string>("Waiting for file upload...");
 const isProcessing = ref<boolean>(false);
@@ -32,6 +32,7 @@ const processFile = async (event: Event) => {
   statusText.value = "Reading file into memory...";
 
   try {
+    console.log("file", file.name, file.size, file);
     const buffer = await file.arrayBuffer();
 
     // Instantiate the worker using the Vite import

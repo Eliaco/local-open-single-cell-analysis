@@ -11,8 +11,7 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
-    Button: typeof import('primevue/button')['default']
-    ExplorePageView: typeof import('./src/components/views/ExplorePageView.vue')['default']
+    HelloWorld: typeof import('./src/components/HelloWorld.vue')['default']
     HomeLayout: typeof import('./src/components/layouts/HomeLayout.vue')['default']
     HomePageView: typeof import('./src/components/views/HomePageView.vue')['default']
     IconCommunity: typeof import('./src/components/icons/IconCommunity.vue')['default']
@@ -20,18 +19,18 @@ declare module 'vue' {
     IconEcosystem: typeof import('./src/components/icons/IconEcosystem.vue')['default']
     IconSupport: typeof import('./src/components/icons/IconSupport.vue')['default']
     IconTooling: typeof import('./src/components/icons/IconTooling.vue')['default']
-    PipelinePageView: typeof import('./src/components/views/PipelinePageView.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     RunPageView: typeof import('./src/components/views/RunPageView.vue')['default']
     ScranPipeline: typeof import('./src/components/ScranPipeline.vue')['default']
+    TheWelcome: typeof import('./src/components/TheWelcome.vue')['default']
     UApp: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/App.vue')['default']
     UButton: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Button.vue')['default']
     UCard: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Card.vue')['default']
     UFileUpload: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/FileUpload.vue')['default']
-    UIcon: typeof import('./node_modules/@nuxt/ui/dist/runtime/vue/components/Icon.vue')['default']
-    ULink: typeof import('./node_modules/@nuxt/ui/dist/runtime/vue/overrides/vue-router/Link.vue')['default']
     UNavigationMenu: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/NavigationMenu.vue')['default']
+    UStepper: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Stepper.vue')['default']
     ViewPageView: typeof import('./src/components/views/ViewPageView.vue')['default']
+    WelcomeItem: typeof import('./src/components/WelcomeItem.vue')['default']
   }
 }

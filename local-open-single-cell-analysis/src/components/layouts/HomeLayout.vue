@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { NavigationMenuItem } from "@nuxt/ui";
+import { loadedDataset, clearLoadedDataset } from "../../globalRefs";
 
 const items: NavigationMenuItem[] = [
   {
@@ -26,16 +27,35 @@ const items: NavigationMenuItem[] = [
 <template>
   <div class="app">
     <header class="header">
-      <div class="w-full h-full flex items-center glass">
-        <div class="flex items-center p-2">
-          <img
-            src="@/assets/LoSCA_logo.png"
-            alt="local open single cell analysis logo"
-            height="32px"
-            width="32px"
-          />
+      <div class="w-full h-full flex flex-row gap-4 glass">
+        <div class="basis-1/3 flex items-center">
+          <div class="flex items-center p-2">
+            <img
+              src="@/assets/LoSCA_logo.png"
+              alt="local open single cell analysis logo"
+              height="32px"
+              width="32px"
+            />
+          </div>
+          <h1 class="pl-4 text-md">local open single cell analysis</h1>
         </div>
-        <h1 class="pl-4 text-md">local open single cell analysis</h1>
+        <div
+          v-if="loadedDataset.fileName.value"
+          class="basis-1/3 flex items-center justify-center"
+        >
+          <span>{{ loadedDataset.fileName }}</span
+          ><UButton
+            color="error"
+            size="md"
+            variant="ghost"
+            class="rounded-full"
+            @click="clearLoadedDataset"
+            >remove</UButton
+          >
+        </div>
+        <div class="basis-1/3 flex items-center justify-around">
+          <!--TODO-->
+        </div>
       </div>
     </header>
 

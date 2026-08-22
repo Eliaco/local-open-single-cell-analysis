@@ -23,6 +23,8 @@ self.onmessage = async (event: MessageEvent) => {
   // Extract 'name' along with 'buffer' so we know the file extension
   const { buffer, name } = event.data;
 
+  console.log(buffer, name);
+
   console.log("Worker received file name:", name);
 
   try {
@@ -63,6 +65,7 @@ self.onmessage = async (event: MessageEvent) => {
       type: "status",
       text: `Matrix loaded: ${mat.numberOfRows()} genes, ${mat.numberOfColumns()} cells. Running Quality Control...`,
     });
+    return;
     let qc_metrics = scran.perCellRnaQcMetrics(mat);
     let qc_filters = scran.suggestRnaQcFilters(qc_metrics);
     let filtered_mat = scran.filterCells(mat, qc_filters.filter(qc_metrics));

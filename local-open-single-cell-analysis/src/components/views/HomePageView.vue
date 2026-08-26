@@ -2,6 +2,7 @@
 import { ref, watch } from "vue";
 import DynamicPipelineWorker from "../../workers/scran.dynamic.pipeline.worker.ts?worker"; // Import the worker using Vite's worker syntax
 import { clearLoadedDataset, loadedDataset } from "../../globalRefs";
+import exampleDatasetUrl from "../../../example_data/SRA779509_SRS3805247.h5ad?url";
 const file = ref<File | null>(null);
 
 const statusText = ref<string>("Waiting for file upload...");
@@ -13,6 +14,24 @@ const removeFile = () => {
   file.value = null;
   datasetLoaded.value = false;
   statusText.value = "Waiting for file upload...";
+};
+
+const loadExample = async () => {
+  try {
+    const response = await fetch(exampleDatasetUrl);
+    if (!response.ok) throw new Error(`Request failed with ${response.status}`);
+
+    file.value = new File(
+      [await response.blob()],
+      "SRA779509_SRS3805247_initial.h5ad",
+      { type: "application/octet-stream" },
+    );
+    await processFile();
+  } catch (error) {
+    console.error("Example dataset loading failed:", error);
+    statusText.value = "Failed to load the example dataset.";
+    loading.value = false;
+  }
 };
 
 const processFile = async () => {
@@ -80,22 +99,28 @@ watch(loadedDataset.worker, (newVal) => {
 <template>
   <div class="w-full h-full flex flex-col items-center justify-center gap-4">
     <h2 class="text-3xl">local open single cell analysis</h2>
-    <UFileUpload
-      v-if="!file"
-      v-model="file"
-      @change="processFile"
-      accept=".h5ad"
-      color="neutral"
-      highlight
-      :icon="false"
-      label="drop your dataset here"
-      description="only .h5ad"
-      class="w-1/2 h-16"
-      :ui="{
-        root: '!p-0',
-        base: '!p-0 rounded-full',
-      }"
-    />
+    <div v-if="!file" class="w-1/2 h-16">
+      <UFileUpload
+        v-model="file"
+        @change="processFile"
+        accept=".h5ad"
+        color="neutral"
+        highlight
+        :icon="false"
+        label="drop your dataset here"
+        description="only .h5ad"
+        :ui="{
+          root: '!p-0',
+          base: '!p-0 rounded-full',
+        }"
+      />
+      <ULink
+        class="w-full mt-2 flex justify-center text-[0.65em] text-secondary underline"
+        @click="loadExample"
+      >
+        ...or use an example
+      </ULink>
+    </div>
     <UCard
       v-else
       class="w-1/2 transition-[height,border-radius] duration-500 ease-in-out overflow-hidden"

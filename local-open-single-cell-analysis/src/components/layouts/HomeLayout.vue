@@ -1,27 +1,44 @@
 <script setup lang="ts">
+import { ref, watch } from "vue";
 import type { NavigationMenuItem } from "@nuxt/ui";
 import { loadedDataset, clearLoadedDataset } from "../../globalRefs";
 
-const items: NavigationMenuItem[] = [
+const items = ref<NavigationMenuItem[]>([
   {
-    label: "Home",
+    label: "home",
     icon: "i-lucide-house",
     to: "/",
     exact: true,
   },
-  {
-    label: "Run",
-    icon: "i-lucide-play",
-    to: "/run",
-    exact: true,
-  },
-  {
-    label: "View",
-    icon: "i-lucide-eye",
-    to: "/view",
-    exact: true,
-  },
-];
+]);
+
+watch(loadedDataset.rows, (rows) => {
+  if (rows === null) {
+    // remove run object from items if it exists
+    items.value = items.value.filter((item) => item.label !== "run");
+  } else {
+    items.value.push({
+      label: "run",
+      icon: "i-lucide-play",
+      to: "/run",
+      exact: true,
+    });
+  }
+});
+
+watch(loadedDataset.umap_x, (rows) => {
+  if (rows === null) {
+    // remove view object from items if it exists
+    items.value = items.value.filter((item) => item.label !== "view");
+  } else {
+    items.value.push({
+      label: "view",
+      icon: "i-lucide-eye",
+      to: "/view",
+      exact: true,
+    });
+  }
+});
 </script>
 
 <template>
@@ -62,6 +79,7 @@ const items: NavigationMenuItem[] = [
     <div class="main relative flex flex-row w-full h-full">
       <aside class="sidebar absolute left-0 top-0 bottom-0">
         <UNavigationMenu
+          v-if="items.length > 1"
           collapsed
           orientation="vertical"
           :items="items"

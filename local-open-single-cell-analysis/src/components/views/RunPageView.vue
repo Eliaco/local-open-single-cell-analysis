@@ -104,7 +104,7 @@ const runPipeline = async () => {
     // The "name" property is required for the worker to know it is an H5AD file
     worker.postMessage({
       msgType: "run",
-      nMADs: QCfilters.nMADs.selectedOption.value,
+      nMADs: QCfilters.nMADs.selectedOption.value.value,
     });
   } catch (error) {
     console.error("File reading failed:", error);

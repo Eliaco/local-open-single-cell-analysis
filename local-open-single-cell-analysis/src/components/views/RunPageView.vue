@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, watch } from "vue";
 import type { StepperItem } from "@nuxt/ui";
 import type { AccordionItem } from "@nuxt/ui";
 import { loadedDataset, clearLoadedDataset } from "../../globalRefs";
@@ -60,6 +60,7 @@ const QCfilters = {
 
 const loading = ref(false);
 const statusText = ref("");
+const statusLog = ref<string[]>([]);
 const pipelineFinished = ref(false);
 
 const runPipeline = async () => {
@@ -114,6 +115,12 @@ const runPipeline = async () => {
 };
 
 const activeAccordion = ref(["qc"]);
+
+watch(statusText, (newStatus) => {
+  if (newStatus) {
+    statusLog.value.push(newStatus);
+  }
+});
 </script>
 
 <template>
@@ -149,18 +156,30 @@ const activeAccordion = ref(["qc"]);
             </template>
           </UAccordion>
           <UStepper v-else v-model="active" :items="items" class="p-8" />
-          {{ statusText }}
+          <div
+            v-for="(value, i) in statusLog.slice().reverse()"
+            :key="i"
+            class="text-sm text-secondary pb-0.5"
+            :style="{
+              opacity: Math.exp(-Math.pow(i / 4, 3)),
+            }"
+            :class="{ 'font-semibold': i === 0 }"
+          >
+            >> {{ value }}
+          </div>
         </div>
         <div class="text-right p-4">
           <UButton
             v-if="!pipelineFinished"
-            :label="loading ? 'running...' : 'run'"
             :disabled="loading"
             :color="loading ? 'secondary' : 'primary'"
             size="2xl"
             class="pl-8 pt-2 pr-8 pb-2 rounded-full"
             @click="runPipeline"
-          ></UButton>
+          >
+            <span v-if="loading">running<LoadingDots /></span>
+            <span v-else>run</span>
+          </UButton>
           <UButton
             v-else
             @click="$router.push('/view')"

@@ -3,6 +3,10 @@ import { ref, watch } from "vue";
 import DynamicPipelineWorker from "../../workers/scran.dynamic.pipeline.worker.ts?worker"; // Import the worker using Vite's worker syntax
 import { clearLoadedDataset, loadedDataset } from "../../globalRefs";
 import exampleDatasetUrl from "../../../example_data/SRA779509_SRS3805247.h5ad?url";
+import { useRouter } from "vue-router";
+import LoadingDots from "../LoadingDots.vue";
+const router = useRouter();
+
 const file = ref<File | null>(null);
 
 const statusText = ref<string>("Waiting for file upload...");
@@ -10,7 +14,7 @@ const loading = ref<boolean>(false);
 const datasetLoaded = ref<boolean>(false);
 
 const removeFile = () => {
-  clearLoadedDataset();
+  clearLoadedDataset(router);
   file.value = null;
   datasetLoaded.value = false;
   statusText.value = "Waiting for file upload...";
@@ -23,7 +27,7 @@ const loadExample = async () => {
 
     file.value = new File(
       [await response.blob()],
-      "SRA779509_SRS3805247_initial.h5ad",
+      "SRA779509_SRS3805247.h5ad",
       { type: "application/octet-stream" },
     );
     await processFile();
@@ -58,7 +62,7 @@ const processFile = async () => {
         loading.value = false;
         worker.terminate();
       } else if (data.type === "complete") {
-        clearLoadedDataset();
+        clearLoadedDataset(router);
         loadedDataset.worker.value = worker;
         loadedDataset.fileName.value = file.value?.name || "undefined.h5ad";
         loadedDataset.rows.value = data.rows;
@@ -161,13 +165,14 @@ watch(loadedDataset.worker, (newVal) => {
           <UButton
             v-if="!datasetLoaded"
             @click="processFile"
-            :label="loading ? 'loading...' : 'load'"
             :preview="false"
             :color="loading ? 'secondary' : 'primary'"
             :disabled="loading"
             size="2xl"
             class="px-8 py-2 rounded-full"
           >
+            <span v-if="loading"> loading<LoadingDots /> </span>
+            <span v-else> load </span>
           </UButton>
           <UButton
             v-else

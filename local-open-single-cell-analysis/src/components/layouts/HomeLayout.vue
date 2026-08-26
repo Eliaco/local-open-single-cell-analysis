@@ -2,6 +2,8 @@
 import { ref, watch } from "vue";
 import type { NavigationMenuItem } from "@nuxt/ui";
 import { loadedDataset, clearLoadedDataset } from "../../globalRefs";
+import { useRouter } from "vue-router";
+const router = useRouter();
 
 const items = ref<NavigationMenuItem[]>([
   {
@@ -66,7 +68,7 @@ watch(loadedDataset.umap_x, (rows) => {
             size="md"
             variant="ghost"
             class="ml-2 rounded-full"
-            @click="clearLoadedDataset"
+            @click="clearLoadedDataset(router)"
             >remove</UButton
           >
         </div>

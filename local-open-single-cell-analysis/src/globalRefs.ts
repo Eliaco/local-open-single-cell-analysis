@@ -1,4 +1,5 @@
 import { ref, shallowRef } from "vue";
+import type { Router } from "vue-router";
 
 export const loadedDataset = {
   worker: shallowRef<Worker | null>(null),
@@ -9,7 +10,7 @@ export const loadedDataset = {
   umap_y: ref<number[] | null>(null),
 };
 
-export function clearLoadedDataset() {
+export function clearLoadedDataset(router: Router) {
   loadedDataset.worker.value?.terminate();
   loadedDataset.worker.value = null;
   loadedDataset.fileName.value = null;
@@ -17,6 +18,7 @@ export function clearLoadedDataset() {
   loadedDataset.columns.value = null;
   loadedDataset.umap_x.value = null;
   loadedDataset.umap_y.value = null;
+  router.push("/");
   globalState.value = ["home"];
 }
 

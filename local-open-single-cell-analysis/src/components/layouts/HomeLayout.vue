@@ -48,7 +48,7 @@ const items: NavigationMenuItem[] = [
             color="error"
             size="md"
             variant="ghost"
-            class="rounded-full"
+            class="ml-2 rounded-full"
             @click="clearLoadedDataset"
             >remove</UButton
           >
@@ -59,8 +59,8 @@ const items: NavigationMenuItem[] = [
       </div>
     </header>
 
-    <div class="main">
-      <aside class="sidebar">
+    <div class="main relative flex flex-row w-full h-full">
+      <aside class="sidebar absolute left-0 top-0 bottom-0">
         <UNavigationMenu
           collapsed
           orientation="vertical"

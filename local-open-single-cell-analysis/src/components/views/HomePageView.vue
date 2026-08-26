@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { ref } from "vue";
-import LoadDatasetWorker from "../../workers/scran.load.data.worker.ts?worker"; // Import the worker using Vite's worker syntax
+import { ref, watch } from "vue";
+import DynamicPipelineWorker from "../../workers/scran.dynamic.pipeline.worker.ts?worker"; // Import the worker using Vite's worker syntax
 import { clearLoadedDataset, loadedDataset } from "../../globalRefs";
 const file = ref<File | null>(null);
 
 const statusText = ref<string>("Waiting for file upload...");
-const isProcessing = ref<boolean>(false);
+const loading = ref<boolean>(false);
 const datasetLoaded = ref<boolean>(false);
 
 const removeFile = () => {
@@ -18,17 +18,15 @@ const removeFile = () => {
 const processFile = async () => {
   if (!file.value) return;
 
-  isProcessing.value = true;
+  loading.value = true;
   statusText.value = "Reading file into memory...";
 
   try {
-    console.log("aaaa", file.value);
     console.log("file", file.value.name, file.value.size, file.value);
     const buffer: ArrayBuffer = await file.value.arrayBuffer();
-    console.log("buffer", file.value.name, buffer.byteLength);
 
     // Instantiate the worker using the Vite import
-    const worker = new LoadDatasetWorker();
+    const worker = new DynamicPipelineWorker();
 
     // Listen for messages coming back from pipeline.worker.ts
     worker.onmessage = (e: MessageEvent) => {
@@ -38,7 +36,7 @@ const processFile = async () => {
         statusText.value = data.text;
       } else if (data.type === "error") {
         statusText.value = `Error: ${data.text}`;
-        isProcessing.value = false;
+        loading.value = false;
         worker.terminate();
       } else if (data.type === "complete") {
         clearLoadedDataset();
@@ -47,22 +45,36 @@ const processFile = async () => {
         loadedDataset.rows.value = data.rows;
         loadedDataset.columns.value = data.cols;
         statusText.value = "Finished!";
-        isProcessing.value = false;
+        loading.value = false;
         datasetLoaded.value = true;
       }
     };
 
     // The "name" property is required for the worker to know it is an H5AD file
     worker.postMessage(
-      { buffer: buffer, name: file.value.name, file: file.value },
+      {
+        msgType: "load",
+        buffer: buffer,
+        name: file.value.name,
+        file: file.value,
+      },
       [buffer],
     );
   } catch (error) {
     console.error("File reading failed:", error);
     statusText.value = "Failed to read the file.";
-    isProcessing.value = false;
+    loading.value = false;
   }
 };
+
+watch(loadedDataset.worker, (newVal) => {
+  console.log("loadedDataset changed:", newVal);
+  if (newVal === null) {
+    file.value = null;
+    datasetLoaded.value = false;
+    statusText.value = "Waiting for file upload...";
+  }
+});
 </script>
 
 <template>
@@ -86,49 +98,71 @@ const processFile = async () => {
     />
     <UCard
       v-else
-      class="w-1/2 h-16 rounded-full"
+      class="w-1/2 transition-[height,border-radius] duration-500 ease-in-out overflow-hidden"
+      :class="{
+        'h-16 rounded-full': !datasetLoaded,
+        'h-24 rounded-4xl': datasetLoaded,
+      }"
       :ui="{
-        body: 'h-full !p-3 flex items-center',
+        /* items-start anchors the inner content to the top boundary */
+        body: 'h-full !p-3 flex items-start',
       }"
     >
-      <div class="w-full flex items-center justify-between">
-        <div class="ml-3 flex items-center gap-2">
-          <div class="">{{ file?.name }}</div>
+      <!-- h-10 fits inside the h-16 parent padding; items-center keeps text centered within this top row -->
+      <div class="w-full h-10 grid grid-cols-3 gap-2 items-center">
+        <!--File name and action-->
+        <div class="ml-3 col-span-2 flex items-center gap-2">
+          <div>{{ file?.name }}</div>
           <UButton
             color="error"
             size="md"
             variant="ghost"
             class="rounded-full"
             @click="removeFile"
-            >remove</UButton
           >
+            remove
+          </UButton>
         </div>
-        <div class="flex items-center gap-2">
+        <!--General actions-->
+        <div class="flex items-center justify-end gap-2">
           <UButton
-            v-if="!datasetLoaded"
+            v-if="!datasetLoaded && !loading"
             icon="i-lucide-menu"
             variant="soft"
             size="lg"
-            class="pl-2 pt-1 pr-2 pb-1 rounded-full"
+            class="px-2 py-1 rounded-full"
             disabled
           ></UButton>
           <UButton
             v-if="!datasetLoaded"
             @click="processFile"
-            :loading="isProcessing"
+            :label="loading ? 'loading...' : 'load'"
             :preview="false"
-            color="primary"
+            :color="loading ? 'secondary' : 'primary'"
+            :disabled="loading"
             size="2xl"
-            class="pl-8 pt-2 pr-8 pb-2 rounded-full"
-            >load</UButton
-          ><UButton
+            class="px-8 py-2 rounded-full"
+          >
+          </UButton>
+          <UButton
             v-else
             @click="$router.push('/run')"
             color="primary"
             size="2xl"
-            class="pl-8 pt-2 pr-8 pb-2 rounded-full"
-            >continue</UButton
+            class="px-8 py-2 rounded-full"
           >
+            continue
+          </UButton>
+        </div>
+        <!--Dataset info-->
+        <div
+          v-if="datasetLoaded"
+          class="ml-3 col-span-2 text-sm text-neutral-500"
+        >
+          <span class="font-semibold">{{ loadedDataset.columns.value }}</span>
+          barcodes x
+          <span class="font-semibold">{{ loadedDataset.rows.value }}</span>
+          number of transcripts
         </div>
       </div>
     </UCard>

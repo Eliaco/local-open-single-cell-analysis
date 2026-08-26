@@ -15,7 +15,7 @@ export default defineConfig({
       ui: {
         colors: {
           primary: "brand",
-          secondary: "green",
+          secondary: "gray",
           success: "green",
           info: "blue",
           warning: "yellow",

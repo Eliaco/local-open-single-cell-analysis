@@ -24,6 +24,7 @@ declare module 'vue' {
     RunPageView: typeof import('./src/components/views/RunPageView.vue')['default']
     ScranPipeline: typeof import('./src/components/ScranPipeline.vue')['default']
     TheWelcome: typeof import('./src/components/TheWelcome.vue')['default']
+    UAccordion: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Accordion.vue')['default']
     UApp: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/App.vue')['default']
     UButton: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Button.vue')['default']
     UCard: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Card.vue')['default']

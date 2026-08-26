@@ -65,9 +65,18 @@ self.onmessage = async (event: MessageEvent) => {
       type: "status",
       text: `Matrix loaded: ${mat.numberOfRows()} genes, ${mat.numberOfColumns()} cells. Running Quality Control...`,
     });
-    return;
+
+    //
+    //
+    // Quality control
+    //
+    //
+
+    const nMADS = 3;
     let qc_metrics = scran.perCellRnaQcMetrics(mat);
-    let qc_filters = scran.suggestRnaQcFilters(qc_metrics);
+    let qc_filters = scran.suggestRnaQcFilters(qc_metrics, {
+      numberOfMADs: nMADS,
+    });
     let filtered_mat = scran.filterCells(mat, qc_filters.filter(qc_metrics));
 
     self.postMessage({ type: "status", text: "Running Log Normalization..." });
@@ -82,7 +91,7 @@ self.onmessage = async (event: MessageEvent) => {
 
     self.postMessage({ type: "status", text: "Computing PCA..." });
     let pca = scran.runPca(log_mat, { features: hvg_indices, numberOfPCs: 20 });
-
+    console.log("PCA computed:", pca);
     self.postMessage({
       type: "status",
       text: "Optimizing UMAP (this may take a few seconds)...",
@@ -91,9 +100,10 @@ self.onmessage = async (event: MessageEvent) => {
     let neighbors = scran.findNearestNeighbors(index, 15);
     let umap = scran.initializeUmap(neighbors);
     umap.run(umap.totalEpochs());
-
+    console.log(umap);
     self.postMessage({ type: "status", text: "Extracting coordinates..." });
     let coords = umap.extractCoordinates(0);
+    console.log("UMAP coordinates extracted:", coords);
 
     self.postMessage({
       type: "complete",

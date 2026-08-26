@@ -16,7 +16,7 @@ watch(loadedDataset.rows, (rows) => {
   if (rows === null) {
     // remove run object from items if it exists
     items.value = items.value.filter((item) => item.label !== "run");
-  } else {
+  } else if (!items.value.some((item) => item.label === "run")) {
     items.value.push({
       label: "run",
       icon: "i-lucide-play",
@@ -30,7 +30,7 @@ watch(loadedDataset.umap_x, (rows) => {
   if (rows === null) {
     // remove view object from items if it exists
     items.value = items.value.filter((item) => item.label !== "view");
-  } else {
+  } else if (!items.value.some((item) => item.label === "view")) {
     items.value.push({
       label: "view",
       icon: "i-lucide-eye",

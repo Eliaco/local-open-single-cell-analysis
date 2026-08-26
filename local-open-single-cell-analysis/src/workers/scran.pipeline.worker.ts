@@ -72,10 +72,10 @@ self.onmessage = async (event: MessageEvent) => {
     //
     //
 
-    const nMADS = 3;
+    const nMADs = 3;
     let qc_metrics = scran.perCellRnaQcMetrics(mat);
     let qc_filters = scran.suggestRnaQcFilters(qc_metrics, {
-      numberOfMADs: nMADS,
+      numberOfMADs: nMADs,
     });
     let filtered_mat = scran.filterCells(mat, qc_filters.filter(qc_metrics));
 

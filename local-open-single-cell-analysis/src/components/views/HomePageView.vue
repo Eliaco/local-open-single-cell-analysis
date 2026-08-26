@@ -118,7 +118,7 @@ watch(loadedDataset.worker, (newVal) => {
         class="w-full mt-2 flex justify-center text-[0.65em] text-secondary underline"
         @click="loadExample"
       >
-        ...or use an example
+        ...or use an example dataset
       </ULink>
     </div>
     <UCard

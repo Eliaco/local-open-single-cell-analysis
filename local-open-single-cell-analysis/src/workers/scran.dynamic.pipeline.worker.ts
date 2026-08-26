@@ -91,20 +91,20 @@ self.onmessage = async (event: MessageEvent) => {
       return;
     }
 
-    const { msgType, nMADS } = event.data;
+    const { msgType, nMADs: nMADs } = event.data;
 
     //
     // Quality control
     //
     self.postMessage({
       type: "status",
-      text: `Quality controll: nMADS = ${nMADS}`,
+      text: `Quality controll: nMADs = ${nMADs}`,
       step: 1,
     });
-    console.log("Running Quality Control with nMADS:", nMADS);
+    console.log("Running Quality Control with nMADs:", nMADs);
     let qc_metrics = scran.perCellRnaQcMetrics(mat);
     let qc_filters = scran.suggestRnaQcFilters(qc_metrics, {
-      numberOfMADs: nMADS,
+      numberOfMADs: nMADs,
     });
     let filtered_mat = scran.filterCells(mat, qc_filters.filter(qc_metrics));
     self.postMessage({

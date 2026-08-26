@@ -6,62 +6,57 @@ import { loadedDataset, clearLoadedDataset } from "../../globalRefs";
 
 const items = ref<StepperItem[]>([
   {
+    value: "qc",
     title: "Quality Control",
     icon: "i-lucide-broom-sparkles",
     description: "filters out dying cells/empty droplets",
   },
   {
+    value: "nm",
     title: "Normalization",
     icon: "i-lucide-chart-column",
     description: "removes technical bias",
   },
   {
+    value: "fs",
     title: "Feature Selection",
     icon: "i-lucide-list-checks",
     description: "exclude uninformative genes",
   },
   {
+    value: "dr",
     title: "Dim. Reduction",
     icon: "i-lucide-move-3d",
     description: "from a high- to low-dimensional space",
   },
 ]);
-
-const accordionItems = ref<AccordionItem[]>([]);
+// extent type with value
+const accordionItems = ref<(AccordionItem & { value?: string })[]>([]);
 
 onMounted(() => {
   accordionItems.value = items.value.map((item) => ({
     label: item.title,
-    content: item.description,
     icon: item.icon,
+    value: String(item.value),
+    content: item.description,
   }));
 });
 
 // Initialize with -1 so no step index is matched
 const active = ref(-1);
 
-const QCfilters = [
-  {
+const QCfilters = {
+  nMADs: {
     title: "Number of MADs",
     description: "removes cells with too few or too many genes",
     options: [
-      { label: "2 MADs", value: 2 },
-      { label: "3 MADs", value: 3 },
-      { label: "5 MADs", value: 5 },
+      { label: "2", value: 2 },
+      { label: "3", value: 3 },
+      { label: "5", value: 5 },
     ],
-    selectedOption: ref(3), // Default to 3 MADs
+    selectedOption: ref({ label: "3", value: 3 }), // Default to 3 MADs
   },
-  {
-    title: "Filter by mitochondrial content",
-    description: "removes cells with high mitochondrial content",
-    options: [
-      { label: "5%", value: 5 },
-      { label: "10%", value: 10 },
-      { label: "15%", value: 15 },
-    ],
-    selectedOption: ref(10), // Default to 10%
-  },
-];
+};
 
 const loading = ref(false);
 const statusText = ref("");
@@ -109,7 +104,7 @@ const runPipeline = async () => {
     // The "name" property is required for the worker to know it is an H5AD file
     worker.postMessage({
       msgType: "run",
-      nMADS: 3,
+      nMADs: QCfilters.nMADs.selectedOption.value,
     });
   } catch (error) {
     console.error("File reading failed:", error);
@@ -117,6 +112,8 @@ const runPipeline = async () => {
     loading.value = false;
   }
 };
+
+const activeAccordion = ref(["qc"]);
 </script>
 
 <template>
@@ -125,16 +122,32 @@ const runPipeline = async () => {
     <div class="w-full h-full mb-8 flex justify-center">
       <div class="w-2/3 flex flex-col justify-between glass !rounded-4xl">
         <div class="p-8">
-          <div class="text-xl mb-2 text-secondary">settings</div>
+          <div
+            v-if="!loading && !pipelineFinished"
+            class="text-xl mb-2 text-secondary"
+          >
+            settings
+          </div>
           <UAccordion
             v-if="!loading && !pipelineFinished"
+            v-model="activeAccordion"
             type="multiple"
             :items="accordionItems"
           >
             <template #content="{ item }">
-              <p class="text-xs pb-2 text-secondary">{{ item.content }}</p>
-            </template></UAccordion
-          >
+              <p class="text-xs pb-2 text-secondary">
+                {{ item.content }}
+              </p>
+              <div v-if="item.value === 'qc'" class="p-4">
+                <span class="text-sm">nMADs: </span>
+                <USelect
+                  v-model="QCfilters.nMADs.selectedOption.value"
+                  :items="QCfilters.nMADs.options"
+                  size="sm"
+                />
+              </div>
+            </template>
+          </UAccordion>
           <UStepper v-else v-model="active" :items="items" class="p-8" />
           {{ statusText }}
         </div>
